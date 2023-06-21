@@ -1,8 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { RepositoryEnum } from 'src/shared/enums';
 import { ProductEntity } from '../entities';
-import { Repository } from 'typeorm';
-import { CreateProductDto, ReadProductDto } from '../dtos';
+import { Repository, ReturnDocument } from 'typeorm';
+import { CreateProductDto, FilterProductDto, ReadProductDto } from '../dtos';
 
 @Injectable()
 export class VentasService {
@@ -23,7 +23,31 @@ async catalogue(): Promise<ServiceResponseHttpModel>{
         };
 }
 
+async findAll(params? : FilterProductDto):Promise<ServiceResponseHttpModel>{
+    //😁
+    if (params?.limit > 0 && params? >=0) {
+        return this.paginateAndFilter(params);
+    }
+    const response = await this.repository.findAndCount({
+        order:{updateAt: 'ASC'},
+    });
+    
+    return {
+        data: plainToInstance(ReadProductDto, response[0]),
+        pagination: {totalItems: response[1],limit 10},
+    }
 
+}
+async findOne(id:string):Promise<ServiceResponseHttpModel>{
+    //😁
+    const response = this.repository.findOne({
+        where: {id},
+    });
+    if (!response) {
+        throw new NotFoundException('La información no ha sido encontrada');
+    }
+    return response;    
+}
 }
 
 
